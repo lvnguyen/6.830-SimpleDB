@@ -6,6 +6,10 @@ package simpledb;
  * Field objects with the data for each field.
  */
 public class Tuple {
+	
+	private TupleDesc m_td;
+	private RecordId m_rid;
+	private Field[] m_fields;
 
     /**
      * Create a new tuple with the specified schema (type).
@@ -15,6 +19,8 @@ public class Tuple {
      */
     public Tuple(TupleDesc td) {
         // some code goes here
+    	m_td = td;
+    	m_fields = new Field[td.numFields()];
     }
 
     /**
@@ -22,7 +28,7 @@ public class Tuple {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+        return m_td;
     }
 
     /**
@@ -31,7 +37,7 @@ public class Tuple {
      */
     public RecordId getRecordId() {
         // some code goes here
-        return null;
+        return m_rid;
     }
 
     /**
@@ -40,6 +46,7 @@ public class Tuple {
      */
     public void setRecordId(RecordId rid) {
         // some code goes here
+    	m_rid = rid;
     }
 
     /**
@@ -50,6 +57,8 @@ public class Tuple {
      */
     public void setField(int i, Field f) {
         // some code goes here
+    	assert (i >= 0 && i < m_fields.length);
+    	m_fields[i] = f;
     }
 
     /**
@@ -59,7 +68,8 @@ public class Tuple {
      */
     public Field getField(int i) {
         // some code goes here
-        return null;
+        assert (i >= 0 && i < m_fields.length);
+        return m_fields[i];
     }
 
     /**
@@ -73,6 +83,14 @@ public class Tuple {
      */
     public String toString() {
         // some code goes here
-        throw new UnsupportedOperationException("Implement this");
+        String sb = "";
+        for (int i = 0; i < m_fields.length; i++) {
+        	sb += m_fields[i].toString();
+        	if (i + 1 < m_fields.length) {
+        		sb += ' ';
+        	}
+        }
+        sb += '\n';
+        return sb;
     }
 }

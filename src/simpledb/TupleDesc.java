@@ -5,7 +5,31 @@ import java.util.*;
  * TupleDesc describes the schema of a tuple.
  */
 public class TupleDesc {
-
+	
+	private class TDItem {
+		private final Type m_fieldType;
+		private final String m_fieldName;
+		
+		public TDItem(Type fieldType, String fieldName) {
+			this.m_fieldType = fieldType;
+			this.m_fieldName = fieldName;
+		}
+		
+		public Type getType() {
+			return this.m_fieldType;
+		}
+		
+		public String getName(){
+			return this.m_fieldName;
+		}
+		
+		public String toString() {
+			return "(" + m_fieldType.toString() + "," + m_fieldName + ")";
+		}
+	}
+	
+	private ArrayList<TDItem> m_tditems;
+	
     /**
      * Merge two TupleDescs into one, with td1.numFields + td2.numFields
      * fields, with the first td1.numFields coming from td1 and the remaining
@@ -16,7 +40,21 @@ public class TupleDesc {
      */
     public static TupleDesc combine(TupleDesc td1, TupleDesc td2) {
         // some code goes here
-        return null;
+        int newsize = td1.numFields() +td2.numFields();
+        Type[] typeAr = new Type[newsize];
+        String[] stringAr = new String[newsize];
+        
+        for (int i = 0; i < td1.numFields(); i++) {
+        	typeAr[i] = td1.getType(i);
+        	stringAr[i] = td1.getFieldName(i);
+        }
+        
+        for (int i = 0; i < td2.numFields(); i++) {
+        	typeAr[td1.numFields() + i] = td2.getType(i);
+        	stringAr[td1.numFields() + i] = td2.getFieldName(i);
+        }
+        
+        return new TupleDesc(typeAr, stringAr);
     }
 
     /**
@@ -29,6 +67,10 @@ public class TupleDesc {
      */
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
         // some code goes here
+    	this.m_tditems = new ArrayList<TDItem>();
+    	for (int i = 0; i < typeAr.length; i++) {
+    		this.m_tditems.add(new TDItem(typeAr[i], fieldAr[i]));
+    	}
     }
 
     /**
@@ -40,15 +82,17 @@ public class TupleDesc {
      *        this TupleDesc. It must contain at least one entry.
      */
     public TupleDesc(Type[] typeAr) {
-        // some code goes here
+        this.m_tditems = new ArrayList<TDItem>();
+        for (int i = 0; i < typeAr.length; i++) {
+        	this.m_tditems.add(new TDItem(typeAr[i], null));
+        }
     }
 
     /**
      * @return the number of fields in this TupleDesc
      */
     public int numFields() {
-        // some code goes here
-        return 0;
+        return this.m_tditems.size();
     }
 
     /**
@@ -60,7 +104,10 @@ public class TupleDesc {
      */
     public String getFieldName(int i) throws NoSuchElementException {
         // some code goes here
-        return null;
+        if (i < 0 || i > numFields()) {
+        	throw new NoSuchElementException();
+        }
+        return this.m_tditems.get(i).getName();
     }
 
     /**
@@ -72,7 +119,15 @@ public class TupleDesc {
      */
     public int nameToId(String name) throws NoSuchElementException {
         // some code goes here
-        return 0;
+        if (name == null) {
+        	throw new NoSuchElementException();
+        }
+        for (int i = 0; i < this.m_tditems.size(); i++) {
+        	if (name.equals(this.m_tditems.get(i).getName())) {
+        		return i;
+        	}
+        }
+        throw new NoSuchElementException();
     }
 
     /**
@@ -84,7 +139,10 @@ public class TupleDesc {
      */
     public Type getType(int i) throws NoSuchElementException {
         // some code goes here
-        return null;
+        if (i < 0 || i >= numFields()) {
+        	throw new NoSuchElementException();
+        }
+        return this.m_tditems.get(i).getType();
     }
 
     /**
@@ -93,7 +151,11 @@ public class TupleDesc {
      */
     public int getSize() {
         // some code goes here
-        return 0;
+        int size = 0;
+        for (TDItem item : this.m_tditems) {
+        	size += item.getType().getLen();
+        }
+        return size;
     }
 
     /**
@@ -106,13 +168,27 @@ public class TupleDesc {
      */
     public boolean equals(Object o) {
         // some code goes here
-        return false;
+        if (!(o instanceof TupleDesc)) {
+        	return false;
+        }
+        TupleDesc t_o = (TupleDesc) o;
+        if (this.numFields() != t_o.numFields()) {
+        	return false;
+        }
+        for (int i = 0; i < m_tditems.size(); i++) {
+        	Type thisType = this.getType(i);
+        	Type otherType = t_o.getType(i);
+        	if (!thisType.equals(otherType)) {
+        		return false;
+        	}
+        }
+        return true;
     }
 
     public int hashCode() {
         // If you want to use TupleDesc as keys for HashMap, implement this so
         // that equal objects have equals hashCode() results
-        throw new UnsupportedOperationException("unimplemented");
+        return 0;
     }
 
     /**
@@ -123,6 +199,10 @@ public class TupleDesc {
      */
     public String toString() {
         // some code goes here
-        return "";
+        String sb = "";
+        for (TDItem td : this.m_tditems) {
+        	sb += td.toString();
+        }
+        return sb;
     }
 }
