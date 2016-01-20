@@ -10,8 +10,14 @@ public class RecordId {
      * @param pid the pageid of the page on which the tuple resides
      * @param tupleno the tuple number within the page.
      */
+	
+	private PageId m_pid;
+	private int m_tupleno;
+	
     public RecordId(PageId pid, int tupleno) {
         // some code goes here
+    	m_pid = pid;
+    	m_tupleno = tupleno;
     }
 
     /**
@@ -19,7 +25,7 @@ public class RecordId {
      */
     public int tupleno() {
         // some code goes here
-        return 0;
+        return m_tupleno;
     }
 
     /**
@@ -27,7 +33,7 @@ public class RecordId {
      */
     public PageId getPageId() {
         // some code goes here
-        return null;
+        return m_pid;
     }
     
     /**
@@ -37,7 +43,11 @@ public class RecordId {
     @Override
     public boolean equals(Object o) {
     	// some code goes here
-    	throw new UnsupportedOperationException("implement this");
+    	if (!(o instanceof RecordId)) {
+    		return false;
+    	}
+    	RecordId r_o = (RecordId) o;
+    	return (m_pid.equals(r_o.getPageId()) && m_tupleno == r_o.tupleno());
     }
     
     /**
@@ -48,8 +58,7 @@ public class RecordId {
     @Override
     public int hashCode() {
     	// some code goes here
-    	throw new UnsupportedOperationException("implement this");
-    	
+    	return 0;    	
     }
     
 }
