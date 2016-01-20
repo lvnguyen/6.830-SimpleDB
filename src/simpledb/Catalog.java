@@ -20,8 +20,38 @@ public class Catalog {
      * Constructor.
      * Creates a new, empty catalog.
      */
+	
+	private class Table {
+		private String m_name;
+		private DbFile m_file;
+		private String m_pkey;
+		
+		public Table(String name, DbFile file, String pkeyfield) {
+			m_name = name;
+			m_file = file;
+			m_pkey = pkeyfield;
+		}
+		
+		public String getName() {
+			return m_name;
+		}
+		
+		public DbFile getDbFile() {
+			return m_file;
+		}
+		
+		public String getPrimaryKey() {
+			return m_pkey;
+		}
+	}
+	
+	private HashMap<String, Table> m_nameHash;
+	private HashMap<Integer, Table> m_idHash;
+	
     public Catalog() {
         // some code goes here
+    	m_nameHash = new HashMap<String, Table>();
+    	m_idHash = new HashMap<Integer, Table>();
     }
 
     /**
@@ -35,6 +65,9 @@ public class Catalog {
      */
     public void addTable(DbFile file, String name, String pkeyField) {
         // some code goes here
+    	Table data = new Table(name, file, pkeyField);
+    	m_nameHash.put(name, data);
+    	m_idHash.put(file.getId(), data);
     }
 
     public void addTable(DbFile file, String name) {
@@ -59,7 +92,11 @@ public class Catalog {
      */
     public int getTableId(String name) {
         // some code goes here
-        return 0;
+        Table match = this.m_nameHash.get(name);
+        if (match == null) {
+        	throw new NoSuchElementException();
+        }
+        return match.getDbFile().getId();
     }
 
     /**
@@ -69,7 +106,11 @@ public class Catalog {
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
         // some code goes here
-        return null;
+        Table match = this.m_idHash.get(tableid);
+        if (match == null) {
+        	throw new NoSuchElementException();
+        }
+        return match.getDbFile().getTupleDesc();
     }
 
     /**
@@ -80,27 +121,42 @@ public class Catalog {
      */
     public DbFile getDbFile(int tableid) throws NoSuchElementException {
         // some code goes here
-        return null;
+    	 Table match = this.m_idHash.get(tableid);
+         if (match == null) {
+         	throw new NoSuchElementException();
+         }
+         return match.getDbFile();
     }
 
     /** Delete all tables from the catalog */
     public void clear() {
         // some code goes here
+    	m_nameHash.clear();
+    	m_idHash.clear();
     }
 
     public String getPrimaryKey(int tableid) {
         // some code goes here
-        return null;
+    	Table match = this.m_idHash.get(tableid);
+        if (match == null) {
+        	throw new NoSuchElementException();
+        }
+        return match.getPrimaryKey();
     }
 
     public Iterator<Integer> tableIdIterator() {
         // some code goes here
-        return null;
+        Set<Integer> keys = this.m_idHash.keySet();
+        return keys.iterator();
     }
 
     public String getTableName(int id) {
         // some code goes here
-        return null;
+    	Table match = this.m_idHash.get(id);
+        if (match == null) {
+        	throw new NoSuchElementException();
+        }
+        return match.getName();
     }
     
     /**
