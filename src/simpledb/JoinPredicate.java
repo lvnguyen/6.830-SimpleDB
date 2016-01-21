@@ -5,6 +5,10 @@ package simpledb;
  * JoinPredicate is most likely used by the Join operator.
  */
 public class JoinPredicate {
+	
+	private int m_field1;
+	private int m_field2;
+	private Predicate.Op m_op;
 
     /**
      * Constructor -- create a new predicate over two fields of two tuples.
@@ -18,6 +22,9 @@ public class JoinPredicate {
      */
     public JoinPredicate(int field1, Predicate.Op op, int field2) {
         // some code goes here
+    	m_field1 = field1;
+    	m_field2 = field2;
+    	m_op = op;
     }
 
     /**
@@ -27,6 +34,8 @@ public class JoinPredicate {
      */
     public boolean filter(Tuple t1, Tuple t2) {
         // some code goes here
-        return false;
+        Field val1 = t1.getField(m_field1);
+        Field val2 = t2.getField(m_field2);
+        return val1.compare(m_op, val2);
     }
 }
