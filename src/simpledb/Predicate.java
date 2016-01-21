@@ -28,6 +28,10 @@ public class Predicate {
             return values()[i];
         }
     }
+    
+    private int m_field;
+    private Op m_op;
+    private Field m_operand;
 
     /**
      * Constructor.
@@ -38,6 +42,9 @@ public class Predicate {
      */
     public Predicate(int field, Op op, Field operand) {
         // some code goes here
+    	m_field = field;
+    	m_op = op;
+    	m_operand = operand;
     }
 
     /**
@@ -51,7 +58,8 @@ public class Predicate {
      */
     public boolean filter(Tuple t) {
         // some code goes here
-        return false;
+        Field other = t.getField(m_field);
+        return other.compare(m_op, m_operand);
     }
 
     /**
@@ -60,6 +68,6 @@ public class Predicate {
      */
     public String toString() {
         // some code goes here
-        return "";
+        return "f = " + m_field + " op = " + m_op + " operand = " + m_operand;
     }
 }
