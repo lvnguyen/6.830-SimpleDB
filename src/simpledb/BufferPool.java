@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -126,6 +127,12 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+    	DbFile getFile = Database.getCatalog().getDbFile(tableId);
+    	ArrayList<Page> modifiedPages = getFile.addTuple(tid, t);    
+    	for (Page p : modifiedPages) {
+    		p.markDirty(true, tid);
+    		m_cache.put(p.getId(), p);
+    	}
     }
 
     /**
@@ -145,6 +152,10 @@ public class BufferPool {
         throws DbException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+    	DbFile getFile = Database.getCatalog().getDbFile(t.getRecordId().getPageId().getTableId());
+    	Page modifiedPage = getFile.deleteTuple(tid, t);
+    	modifiedPage.markDirty(true, tid);
+    	m_cache.put(modifiedPage.getId(), modifiedPage);
     }
 
     /**

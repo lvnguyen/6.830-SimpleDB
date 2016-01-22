@@ -17,6 +17,9 @@ public class HeapPage implements Page {
     byte header[];
     Tuple tuples[];
     int numSlots;
+    
+    boolean m_isdirty = false;
+    TransactionId m_dirty_tid;
 
     byte[] oldData;
 
@@ -234,6 +237,16 @@ public class HeapPage implements Page {
     public void deleteTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
+    	for (int i = 0; i < tuples.length; i++) {
+    		if (t.equals(tuples[i])) {
+    			if (getSlot(i) == false) {
+    				throw new DbException("Item already removed");
+    			}
+    			setSlot(i, false);
+    			return;
+    		}
+    	}
+    	throw new DbException("Tuple not found");
     }
 
     /**
@@ -246,6 +259,18 @@ public class HeapPage implements Page {
     public void addTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
+    	if (!t.getTupleDesc().equals(td)) {
+    		throw new DbException("Tuple description mismatched");
+    	}
+    	for (int i = 0; i < tuples.length; i++) {
+    		if (getSlot(i) == false) {
+    			tuples[i] = t;
+    			setSlot(i, true);
+    			t.setRecordId(new RecordId(pid, i));
+    			return;
+    		}
+    	}
+    	throw new DbException("No empty slots found");
     }
 
     /**
@@ -254,7 +279,11 @@ public class HeapPage implements Page {
      */
     public void markDirty(boolean dirty, TransactionId tid) {
         // some code goes here
-	// not necessary for lab1
+    	// not necessary for lab1
+    	m_isdirty = dirty;
+    	if (dirty) {
+    		m_dirty_tid = tid;
+    	}    	
     }
 
     /**
@@ -262,8 +291,8 @@ public class HeapPage implements Page {
      */
     public TransactionId isDirty() {
         // some code goes here
-	// Not necessary for lab1
-        return null;
+    	// Not necessary for lab1
+        return (m_isdirty) ? m_dirty_tid : null;
     }
 
     /**
@@ -301,6 +330,15 @@ public class HeapPage implements Page {
     private void setSlot(int i, boolean value) {
         // some code goes here
         // not necessary for lab1
+    	int pageNum = i/8;
+    	int offset = i % 8;
+    	
+    	// Clear the bit in the offset position
+    	header[pageNum] &= (1 << 8) - 1 - (1 << offset);
+    	// If value is 1, fill it in
+    	if (value) {
+    		header[pageNum] |= (1 << offset);
+    	}
     }
 
     /**
