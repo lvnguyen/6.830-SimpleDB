@@ -55,13 +55,12 @@ public class BufferPool {
         	return m_cache.get(pid);
         } else {
         	if (m_cache.size() >= m_maxNumPages) {
-        		throw new DbException("Cache is full");
-        	} else {
-        		DbFile dbfile = Database.getCatalog().getDbFile(pid.getTableId());
-        		Page newPage = dbfile.readPage(pid);
-        		m_cache.put(pid, newPage);
-        		return newPage;
-        	}
+        		evictPage();
+        	}        	
+    		DbFile dbfile = Database.getCatalog().getDbFile(pid.getTableId());
+    		Page newPage = dbfile.readPage(pid);
+    		m_cache.put(pid, newPage);
+    		return newPage;
         }
     }
 
@@ -166,7 +165,9 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for lab1
-
+    	for (PageId pid : m_cache.keySet()) {
+    		flushPage(pid);
+    	}
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -186,6 +187,15 @@ public class BufferPool {
     private synchronized  void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for lab1
+    	
+    	// Put the page into disk, mark dirty to be false
+    	Page flushPage = m_cache.get(pid);
+    	TransactionId dirtyTID = flushPage.isDirty();
+    	if (dirtyTID != null) {
+    		DbFile getFile = Database.getCatalog().getDbFile(pid.getTableId());
+    		getFile.writePage(flushPage);
+    		flushPage.markDirty(false, dirtyTID);
+    	}    	
     }
 
     /** Write all pages of the specified transaction to disk.
@@ -202,6 +212,20 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
+    	boolean pageEvicted = false;
+    	for (PageId pid : m_cache.keySet()) {
+    		try {
+    			flushPage(pid);
+    			m_cache.remove(pid);
+    			pageEvicted = true;
+    			break;
+    		} catch (IOException e) {
+    			throw new DbException("Could not evict this page");
+    		}
+    	}
+    	
+    	if (!pageEvicted) {
+    		throw new DbException("No page evicted");
+    	}
     }
-
 }
