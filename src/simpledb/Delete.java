@@ -1,10 +1,17 @@
 package simpledb;
 
+import java.io.IOException;
+
 /**
  * The delete operator.  Delete reads tuples from its child operator and
  * removes them from the table they belong to.
  */
 public class Delete extends AbstractDbIterator {
+	
+	private TransactionId m_tid;
+	private DbIterator m_child;
+	private TupleDesc m_tddesc;
+	private boolean m_deleted;
 
     /**
      * Constructor specifying the transaction that this delete belongs to as
@@ -14,23 +21,33 @@ public class Delete extends AbstractDbIterator {
      */
     public Delete(TransactionId t, DbIterator child) {
         // some code goes here
+    	m_tid = t;
+    	m_child = child;
+    	
+    	String[] names = new String[] {"Deleted"};
+    	Type[] types = new Type[] {Type.INT_TYPE};
+    	m_tddesc = new TupleDesc(types, names);
     }
 
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+        return m_tddesc;
     }
 
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
+    	m_child.open();
+    	m_deleted = false;
     }
 
     public void close() {
         // some code goes here
+    	m_child.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
         // some code goes here
+    	m_child.rewind();
     }
 
     /**
@@ -43,6 +60,19 @@ public class Delete extends AbstractDbIterator {
      */
     protected Tuple readNext() throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        if (m_deleted) {
+        	return null;
+        }
+        
+        int m_count = 0;
+        while (m_child.hasNext()) {
+        	Tuple t = m_child.next();        	
+        	Database.getBufferPool().deleteTuple(m_tid, t);
+        	m_count++;
+        }
+        Tuple resultTuple = new Tuple(m_tddesc);
+        resultTuple.setField(0, new IntField(m_count));
+        m_deleted = true;
+        return resultTuple;
     }
 }

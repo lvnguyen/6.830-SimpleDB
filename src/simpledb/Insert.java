@@ -1,4 +1,5 @@
 package simpledb;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -6,6 +7,13 @@ import java.util.*;
  * the tableid specified in the constructor
  */
 public class Insert extends AbstractDbIterator {
+	
+	private TransactionId m_tid;
+	private DbIterator m_child;
+	private int m_tableid;
+	private boolean m_inserted;
+	
+	private TupleDesc m_formattedTD; 
 
     /**
      * Constructor.
@@ -17,23 +25,35 @@ public class Insert extends AbstractDbIterator {
     public Insert(TransactionId t, DbIterator child, int tableid)
         throws DbException {
         // some code goes here
+    	m_tid = t;
+    	m_child = child;
+    	m_tableid = tableid;
+    	m_inserted = false;
+    	
+    	String[] names = new String[] {"Inserted"};
+    	Type[] types = new Type[] {Type.INT_TYPE};
+    	m_formattedTD = new TupleDesc(types, names);
     }
 
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+        return m_formattedTD;
     }
 
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
+    	m_child.open();
+    	m_inserted = false;
     }
 
     public void close() {
         // some code goes here
+    	m_child.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
         // some code goes here
+    	m_child.rewind();
     }
 
     /**
@@ -52,6 +72,23 @@ public class Insert extends AbstractDbIterator {
     protected Tuple readNext()
             throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+    	if (m_inserted) {
+    		return null;
+    	}
+
+    	int m_count = 0;
+    	while (m_child.hasNext()) {
+    		Tuple t = m_child.next();
+    		try {
+    			Database.getBufferPool().insertTuple(m_tid, m_tableid, t);
+    		} catch (IOException e) {
+    			throw new DbException("IO Error when inserting");
+    		}
+    		m_count++;
+    	}
+    	Tuple resultTuple = new Tuple(m_formattedTD);
+    	resultTuple.setField(0, new IntField(m_count));
+    	m_inserted = true;
+        return resultTuple;
     }
 }
