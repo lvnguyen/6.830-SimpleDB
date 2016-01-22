@@ -125,10 +125,11 @@ public class HeapFile implements DbFile {
     	m_modified.add(newHeapPage);
     	
     	// Write the new page into disk
-    	RandomAccessFile m_rf = new RandomAccessFile(m_f, "w");
+    	RandomAccessFile m_rf = new RandomAccessFile(m_f, "rw");
     	int offset = BufferPool.PAGE_SIZE * numPages();
     	byte[] hpdata = newHeapPage.getPageData();
-    	m_rf.write(hpdata, offset, BufferPool.PAGE_SIZE);
+    	m_rf.seek(offset);
+    	m_rf.write(hpdata, 0, BufferPool.PAGE_SIZE);
     	m_rf.close();
     	
     	return m_modified;
