@@ -3,6 +3,10 @@ package simpledb;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 /**
  * BufferPool manages the reading and writing of pages into memory from
  * disk. Access methods call into it to retrieve pages, and it fetches
@@ -13,15 +17,18 @@ import java.util.HashMap;
  * locks to read/write the page.
  */
 public class BufferPool {
+	
     /** Bytes per page, including header. */
     public static final int PAGE_SIZE = 4096;
 
     /** Default number of pages passed to the constructor. This is used by
     other classes. BufferPool should use the numPages argument to the
     constructor instead. */
+    
     public static final int DEFAULT_PAGES = 50;
     private HashMap<PageId, Page> m_cache;
-    private int m_maxNumPages;
+    private HashMap<PageId, RWLock> m_lock;
+    private int m_maxNumPages;      
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -31,9 +38,11 @@ public class BufferPool {
     public BufferPool(int numPages) {
         // some code goes here
     	m_cache = new HashMap<PageId, Page>();
+    	m_lock = new HashMap<PageId, RWLock>();
+    	
     	m_maxNumPages = numPages;
     }
-
+    
     /**
      * Retrieve the specified page with the associated permissions.
      * Will acquire a lock and may block if that lock is held by another
@@ -51,6 +60,16 @@ public class BufferPool {
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
+    	
+    	synchronized (this) {
+    		if (!m_lock.containsKey(pid)) {
+    			m_lock.put(pid, new RWLock());
+    		}
+    	}
+    	
+    	// Block until lock is acquired
+    	while (!m_lock.get(pid).acquireLock(tid, perm));
+    	
         if (m_cache.containsKey(pid)) {
         	return m_cache.get(pid);
         } else {
@@ -76,6 +95,7 @@ public class BufferPool {
     public  void releasePage(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for lab1|lab2
+    	m_lock.get(pid).releaseLock(tid);
     }
 
     /**
@@ -86,13 +106,16 @@ public class BufferPool {
     public  void transactionComplete(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+    	for (PageId pid : m_cache.keySet()) {
+    		releasePage(tid, pid);
+    	}
     }
 
     /** Return true if the specified transaction has a lock on the specified page */
-    public   boolean holdsLock(TransactionId tid, PageId p) {
+    public   boolean holdsLock(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for lab1|lab2
-        return false;
+    	return m_lock.get(pid).holdsLock(tid);    			
     }
 
     /**
